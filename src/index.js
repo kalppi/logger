@@ -1,14 +1,12 @@
 import chalk from 'chalk';
 
-let oSend = null, oEnd = null;
-
 export default (options) => {
 	options.log = options.log || console.log;
 	options.colors = options.colors || {};
 	options.timeout = options.timeout || 2000;
 
 	const log = (request, response, status) => {
-		if(response.length === 0) response = '[EMPTY]';
+		if(response.length === 0) response = chalk.gray.bgWhite('[EMPTY]');
 
 		options.log(
 			chalk[options.colors.request || 'reset'](request),
@@ -31,17 +29,22 @@ export default (options) => {
 
 		res.isLogged = true;
 
-		oSend(body);
+		res.oSend(body);
 	};
 
-	const end = (res, body) => {
+	const end = (res, ...args) => {
 		clearTimeout(res.timeout);
 
 		if(!res.isLogged) {
 			log(res.log, '', res.statusCode);
 		}
 
-		oEnd(body);
+		res.oEnd(...args);
+	};
+
+	const timeout = (res) => {
+		log(res.log, `[NO RESPONSE AFTER ${options.timeout}ms]`, 200);
+		res.oEnd();
 	};
 
 	return async (req, res, next) => {
@@ -59,15 +62,12 @@ export default (options) => {
 		res.log = `${req.method} ${req.path}${body}`;
 		res.path = req.path;
 
-		oSend = res.send.bind(res);
-		oEnd = res.end.bind(res);
+		res.oSend = res.send.bind(res);
+		res.oEnd = res.end.bind(res);
 
-		res.send = send.bind(null, res);
-		res.end = end.bind(null, res);
-		res.timeout = setTimeout(() => {
-			log(res.log, `[NO RESPONSE AFTER ${options.timeout}ms]`, 200);
-			oEnd();
-		}, options.timeout);
+		res.send = send.bind(res, res);
+		res.end = end.bind(res, res);
+		res.timeout = setTimeout(timeout.bind(res), options.timeout);
 
 		next();
 	};

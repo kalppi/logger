@@ -92,16 +92,13 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 
 function _asyncToGenerator(fn) { return function () { var gen = fn.apply(this, arguments); return new Promise(function (resolve, reject) { function step(key, arg) { try { var info = gen[key](arg); var value = info.value; } catch (error) { reject(error); return; } if (info.done) { resolve(value); } else { return Promise.resolve(value).then(function (value) { step("next", value); }, function (err) { step("throw", err); }); } } return step("next"); }); }; }
 
-var oSend = null,
-    oEnd = null;
-
 exports.default = function (options) {
 	options.log = options.log || console.log;
 	options.colors = options.colors || {};
 	options.timeout = options.timeout || 2000;
 
 	var log = function log(request, response, status) {
-		if (response.length === 0) response = '[EMPTY]';
+		if (response.length === 0) response = _chalk2.default.gray.bgWhite('[EMPTY]');
 
 		options.log(_chalk2.default[options.colors.request || 'reset'](request), '→', _chalk2.default[options.colors.response || 'reset'](response), status !== 200 ? '(' + status + ')' : '');
 	};
@@ -119,17 +116,26 @@ exports.default = function (options) {
 
 		res.isLogged = true;
 
-		oSend(body);
+		res.oSend(body);
 	};
 
-	var end = function end(res, body) {
+	var end = function end(res) {
+		for (var _len = arguments.length, args = Array(_len > 1 ? _len - 1 : 0), _key = 1; _key < _len; _key++) {
+			args[_key - 1] = arguments[_key];
+		}
+
 		clearTimeout(res.timeout);
 
 		if (!res.isLogged) {
 			log(res.log, '', res.statusCode);
 		}
 
-		oEnd(body);
+		res.oEnd.apply(res, args);
+	};
+
+	var timeout = function timeout(res) {
+		log(res.log, '[NO RESPONSE AFTER ' + options.timeout + 'ms]', 200);
+		res.oEnd();
 	};
 
 	return function () {
@@ -153,15 +159,12 @@ exports.default = function (options) {
 							res.log = req.method + ' ' + req.path + body;
 							res.path = req.path;
 
-							oSend = res.send.bind(res);
-							oEnd = res.end.bind(res);
+							res.oSend = res.send.bind(res);
+							res.oEnd = res.end.bind(res);
 
-							res.send = send.bind(null, res);
-							res.end = end.bind(null, res);
-							res.timeout = setTimeout(function () {
-								log(res.log, '[NO RESPONSE AFTER ' + options.timeout + 'ms]', 200);
-								oEnd();
-							}, options.timeout);
+							res.send = send.bind(res, res);
+							res.end = end.bind(res, res);
+							res.timeout = setTimeout(timeout.bind(res), options.timeout);
 
 							next();
 
