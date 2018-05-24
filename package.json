@@ -2,9 +2,12 @@
   "name": "logger",
   "version": "1.0.0",
   "description": "Express logger middleware",
-  "main": "index.js",
+  "main": "dist/bundle.js",
   "scripts": {
-    "test": "PORT=43434 jest"
+    "test": "PORT=43434 jest",
+    "precommit": "node ./pre-commit-build.js",
+    "start": "webpack --watch",
+    "build": "webpack"
   },
   "repository": {
     "type": "git",
@@ -22,7 +25,15 @@
     "express": "^4.16.3",
     "jest": "^22.4.4",
     "strip-ansi": "^4.0.0",
-    "supertest": "^3.1.0"
+    "supertest": "^3.1.0",
+    "babel-cli": "^6.24.1",
+    "babel-core": "^6.24.1",
+    "babel-loader": "^7.0.0",
+    "babel-plugin-transform-object-rest-spread": "^6.23.0",
+    "babel-polyfill": "^6.26.0",
+    "babel-preset-env": "^1.5.1",
+    "webpack": "^2.6.1",
+    "husky": "^0.13.4"
   },
   "dependencies": {
     "chalk": "^2.4.1"
