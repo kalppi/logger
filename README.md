@@ -11,7 +11,12 @@ const app = express();
 
 if (process.env.NODE_ENV === 'dev') {
    app.use(logger({
-      // options
+      log: console.log,
+      timeout: 2000,
+      colors: {
+         request: 'red',
+         response: 'green'
+      }
    }));
 }
 ```
