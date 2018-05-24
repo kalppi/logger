@@ -1,0 +1,30 @@
+{
+  "name": "logger",
+  "version": "1.0.0",
+  "description": "Express logger middleware",
+  "main": "index.js",
+  "scripts": {
+    "test": "PORT=43434 jest"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/kalppi/logger.git"
+  },
+  "author": "Jarno Luukkonen",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/kalppi/logger/issues"
+  },
+  "homepage": "https://github.com/kalppi/logger#readme",
+  "devDependencies": {
+    "babel-preset-env": "^1.7.0",
+    "body-parser": "^1.18.3",
+    "express": "^4.16.3",
+    "jest": "^22.4.4",
+    "strip-ansi": "^4.0.0",
+    "supertest": "^3.1.0"
+  },
+  "dependencies": {
+    "chalk": "^2.4.1"
+  }
+}
