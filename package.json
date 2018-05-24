@@ -20,7 +20,7 @@
   },
   "homepage": "https://github.com/kalppi/logger#readme",
   "devDependencies": {
-    "babel-preset-env": "^1.7.0",
+    "babel-preset-env": "^1.5.1",
     "body-parser": "^1.18.3",
     "express": "^4.16.3",
     "jest": "^22.4.4",
@@ -31,7 +31,6 @@
     "babel-loader": "^7.0.0",
     "babel-plugin-transform-object-rest-spread": "^6.23.0",
     "babel-polyfill": "^6.26.0",
-    "babel-preset-env": "^1.5.1",
     "webpack": "^2.6.1",
     "husky": "^0.13.4"
   },

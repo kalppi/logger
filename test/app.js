@@ -1,6 +1,6 @@
 import express from 'express';
 import bodyParser from 'body-parser';
-import logger from '../index';
+import logger from '../src/index';
 
 export default (options) => {
 	const app = express();

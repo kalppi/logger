@@ -5,9 +5,13 @@ const exec = require('child_process').exec;
 const bundleFileName = './dist/bundle.js';
 
 const getShaOfBundle = function () {
-    var distFile = fs.readFileSync(bundleFileName);
-    var sha = crypto.createHash('sha1').update(distFile).digest('hex');
-    return sha;
+	try {
+	    const distFile = fs.readFileSync(bundleFileName);
+	    const sha = crypto.createHash('sha1').update(distFile).digest('hex');
+	    return sha;
+	} catch (e) {
+		return null;
+	}
 };
 
 exec('git stash --keep-index')
@@ -20,6 +24,6 @@ const afterSha = getShaOfBundle();
 
 exec('git stash pop');
 
-if (beforeSha !== afterSha) {
+if (beforeSha === null || beforeSha !== afterSha) {
     throw new Error('Need to bundle before committing');
 }
