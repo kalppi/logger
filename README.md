@@ -1,6 +1,6 @@
 # logger
 
-Request and response logging Express middleware.
+Request and response logging Express middleware. Useful when developing apis.
 
 ## Usage
 ```js
@@ -9,9 +9,11 @@ import logger from 'logger';
 
 const app = express();
 
-app.use(logger({
-   // options
-}));
+if (process.env.NODE_ENV === 'dev') {
+   app.use(logger({
+      // options
+   }));
+}
 ```
 
 ## Example outputs
