@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html>
+<head>
+<script type="text/javascript" src="http://localhost:8080/logger-client"></script>
+<script type="text/javascript">
+document.addEventListener("DOMContentLoaded", function(event) {
+	document.getElementById('button').addEventListener('click', async (e) => {
+		logger.log('Trying to fetch user data from server');
+		
+		const response = await fetch('http://localhost:8080/user/4');
+		const data = await response.json();
+
+		logger.log(`Fetched user ${data.name}`)
+	})
+});
+
+</script>
+</head>
+<body>
+	<button id="button">ok</button>
+</body>
+</html>

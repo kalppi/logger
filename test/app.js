@@ -1,19 +1,39 @@
 import express from 'express';
-import bodyParser from 'body-parser';
 import logger from '../src/index';
 
-export default (options) => {
+export default options => {
 	const app = express();
 
-	app.use(bodyParser.json());
-	app.use(logger(options));
+	logger.use(app, options);
 
 	app.get('/', (req, res) => {
+		res.sendFile('index.html', { root: __dirname });
+	});
+
+	app.get('/hello', (req, res) => {
 		res.send('Hello World');
+	});
+
+	app.get('/user/:id', (req, res) => {
+		const id = parseInt(req.params.id, 10);
+
+		const sql = `
+			SELECT * FROM users u
+			INNER JOIN info i ON i.user_id = u.id
+			WHERE u.id = $1
+		`;
+
+		res.log('Fetching user from database', sql, [id]);
+
+		res.log('ok');
+
+		res.json({ id, name: 'Pertti', score: 3434 });
 	});
 
 	app.get('/sum', (req, res) => {
 		const numbers = req.query.numbers.map(n => parseInt(n, 10));
+
+		res.log('Calculating sum of numbers', numbers);
 
 		res.json({
 			sum: numbers.reduce((acc, val) => acc + val, 0)
@@ -28,21 +48,23 @@ export default (options) => {
 		});
 	});
 
-	app.get('/timeout', (req, res) => {
-
-	});
+	app.get('/timeout', (req, res) => {});
 
 	app.get('/404', (req, res) => {
-		res.status(404).json({error: 'not found'});
+		res.status(404).json({ error: 'not found' });
 	});
 
 	app.get('/400', (req, res) => {
 		res.status(400).end();
 	});
 
+	app.get('/500', (req, res) => {
+		res.status(500).end();
+	});
+
 	app.post('/max', (req, res) => {
 		const numbers = req.body.numbers.map(n => parseInt(n, 10));
-		
+
 		res.json({
 			max: Math.max(...numbers)
 		});
@@ -50,5 +72,5 @@ export default (options) => {
 
 	const server = app.listen(process.env.PORT);
 
-	return { app, server };
-}
+	return { app, server };
+};

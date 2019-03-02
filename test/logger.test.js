@@ -32,7 +32,7 @@ describe('Logger', () => {
 	});
 
 	test('GET /sum sends json', async () => {
-		await request.get('/sum').query({numbers: [1, 2, 3]});
+		await request.get('/sum').query({ numbers: [1, 2, 3] });
 
 		const out = log.mock.calls[0].map(stripAnsi);
 
@@ -41,7 +41,7 @@ describe('Logger', () => {
 	});
 
 	test('GET /product sends json and status', async () => {
-		await request.get('/product').query({numbers: [1, 2, 3, 4]});
+		await request.get('/product').query({ numbers: [1, 2, 3, 4] });
 
 		const out = log.mock.calls[0].map(stripAnsi);
 
@@ -51,7 +51,7 @@ describe('Logger', () => {
 	});
 
 	test('POST /max sends json', async () => {
-		await request.post('/max').send({numbers: [1, 2, 3, 2, 1]});
+		await request.post('/max').send({ numbers: [1, 2, 3, 2, 1] });
 
 		const out = log.mock.calls[0].map(stripAnsi);
 

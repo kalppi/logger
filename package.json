@@ -5,6 +5,7 @@
   "main": "dist/bundle.js",
   "scripts": {
     "test": "PORT=43434 jest",
+    "test-server": "PORT=8080 node_modules/.bin/nodemon --exec node_modules/.bin/babel-node test/server.js",
     "precommit": "node ./pre-commit-build.js",
     "start": "webpack --watch",
     "build": "webpack"
@@ -20,21 +21,24 @@
   },
   "homepage": "https://github.com/kalppi/logger#readme",
   "devDependencies": {
-    "babel-preset-env": "^1.5.1",
-    "body-parser": "^1.18.3",
-    "express": "^4.16.3",
-    "jest": "^22.4.4",
-    "strip-ansi": "^4.0.0",
-    "supertest": "^3.1.0",
     "babel-cli": "^6.24.1",
     "babel-core": "^6.24.1",
     "babel-loader": "^7.0.0",
     "babel-plugin-transform-object-rest-spread": "^6.23.0",
     "babel-polyfill": "^6.26.0",
-    "webpack": "^2.6.1",
-    "husky": "^0.13.4"
+    "babel-preset-env": "^1.5.1",
+    "express": "^4.16.3",
+    "husky": "^0.13.4",
+    "jest": "^22.4.4",
+    "nodemon": "^1.18.10",
+    "supertest": "^3.1.0",
+    "webpack": "^2.6.1"
   },
   "dependencies": {
-    "chalk": "^2.4.1"
+    "strip-ansi": "^4.0.0",
+    "body-parser": "^1.18.3",
+    "chalk": "^2.4.1",
+    "cors": "^2.8.5",
+    "ws": "^6.1.4"
   }
 }
