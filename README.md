@@ -1,6 +1,6 @@
 # logger
 
-Request and response logging Express middleware. Useful when developing apis.
+Neat logger for Express backend, that can output to client console through websocket.
 
 ## Usage
 ```js
