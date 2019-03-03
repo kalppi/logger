@@ -3,6 +3,7 @@ import bodyParser from 'body-parser';
 import ws from 'ws';
 import cors from 'cors';
 import stripAnsi from 'strip-ansi';
+import path from 'path';
 
 const color = (color, background, text) => {
 	color = color || 'reset';
@@ -15,16 +16,6 @@ const color = (color, background, text) => {
 	}
 
 	return chalk[background][color](text);
-};
-
-const colorStatus = status => {
-	if (status >= 400 && status < 500) {
-		return chalk.black.bgYellowBright(`(${status})`);
-	} else if (status >= 500 && status < 600) {
-		return chalk.black.bgRedBright(`(${status})`);
-	} else {
-		return `(${status})`;
-	}
 };
 
 class ClientLog {
@@ -62,6 +53,8 @@ class ClientLog {
 }
 
 const use = (app, options) => {
+	'use strict';
+
 	options = options || {};
 
 	options.log = options.log || console.log;
@@ -70,6 +63,8 @@ const use = (app, options) => {
 	options.timeout = options.timeout || 2000;
 	options.filter = options.filter || [];
 	options.indent = options.indent !== undefined ? options.indent : 0;
+	options.multiline =
+		options.multiline !== undefined ? options.multiline : true;
 
 	if (typeof options.indent === 'number') {
 		options.indent = ' '.repeat(options.indent);
@@ -101,12 +96,8 @@ const use = (app, options) => {
 
 	const json = o => JSON.stringify(o, null, options.jsonMultiline ? 3 : 0);
 
-	const tokenizeLog = (res, status) => {
+	const tokenizeLog = res => {
 		const out = [];
-
-		if (status === undefined) {
-			status = res.statusCode;
-		}
 
 		const getColor = type =>
 			options.colors[type] ? options.colors[type] : 'reset';
@@ -117,17 +108,20 @@ const use = (app, options) => {
 		const handle = (log, index) => {
 			let value = log.value;
 
-			if (Array.isArray(value) && value.length > 0) {
-				handle(value[0], index, value.length + 1);
+			if (
+				log.type === 'log' &&
+				Array.isArray(value) &&
+				value.length > 0
+			) {
+				handle(value[0], index);
 
 				for (let i = 1; i < value.length; i++) {
-					handle({ ...value[i], sign: ' ' }, i);
+					handle(
+						{ ...value[i], sign: options.multiline ? ' ' : '|' },
+						i
+					);
 				}
 			} else {
-				if (typeof value === 'object') {
-					value = json(value);
-				}
-
 				if (index > 0) {
 					out.push({
 						type: 'reset',
@@ -144,7 +138,7 @@ const use = (app, options) => {
 							background: getBackground('sign')
 						});
 					} else {
-						let sign = options.multiline ? '⤷' : '→ ';
+						let sign = options.multiline ? '⤷' : '→';
 
 						if (
 							log.type === 'response' ||
@@ -178,48 +172,44 @@ const use = (app, options) => {
 						background: getBackground('response')
 					});
 				} else {
-					out.push({
-						type: log.type,
-						value,
-						color: getColor(log.type),
-						background: getBackground(log.type)
-					});
+					if (log.type === 'info') {
+						for (let v of value) {
+							out.push({
+								type: v.type,
+								value: v.value,
+								color: getColor(v.type),
+								background: getBackground(v.type)
+							});
+
+							out.push({
+								type: 'reset',
+								value: ' ',
+								color: getColor('reset'),
+								background: getBackground('reset')
+							});
+						}
+					} else {
+						if (typeof value === 'object') {
+							value = json(value);
+						}
+
+						out.push({
+							type: log.type,
+							value,
+							color: getColor(log.type),
+							background: getBackground(log.type)
+						});
+					}
 				}
 
 				if (log.type === 'response') {
-					if (value.length === 0)
+					if (value.length === 0) {
 						out.push({
 							type: 'meta',
 							value: '[EMPTY]',
 							color: getColor('meta'),
 							background: getBackground('meta')
 						});
-
-					if (status !== null) {
-						out.push({ type: 'reset', value: ' ' });
-
-						if (status >= 400 && status < 500) {
-							out.push({
-								type: 'status-client',
-								value: `(${status})`,
-								color: getColor('status-client'),
-								background: getBackground('status-client')
-							});
-						} else if (status >= 500 && status < 600) {
-							out.push({
-								type: 'status-server',
-								value: `(${status})`,
-								color: getColor('status-server'),
-								background: getBackground('status-server')
-							});
-						} else {
-							out.push({
-								type: 'status',
-								value: `(${status})`,
-								color: getColor('status'),
-								background: getBackground('status')
-							});
-						}
 					}
 				}
 
@@ -234,13 +224,13 @@ const use = (app, options) => {
 			}
 		};
 
-		res.logs.forEach((log, index) => handle(log, index, res.logs.length));
+		res.logs.forEach((log, index) => handle(log, index));
 
 		return out;
 	};
 
-	const outputLog = (res, status) => {
-		const tokens = tokenizeLog(res, status);
+	const outputLog = res => {
+		const tokens = tokenizeLog(res);
 
 		const out = [];
 
@@ -249,62 +239,6 @@ const use = (app, options) => {
 		}
 
 		options.log({ text: out.join(''), tokens });
-
-		// return;
-
-		// let out = [];
-
-		// if (status === undefined) {
-		// 	status = res.statusCode;
-		// }
-
-		// const handle = (log, index) => {
-		// 	let value = log.value;
-
-		// 	if (Array.isArray(value) && value.length > 0) {
-		// 		handle(value[0], index, value.length + 1);
-
-		// 		for (let i = 1; i < value.length; i++) {
-		// 			handle({ ...value[i], sign: '+' }, i);
-		// 		}
-		// 	} else {
-		// 		if (typeof value === 'object') {
-		// 			value = json(value);
-		// 		}
-
-		// 		if (index > 0) {
-		// 			if (log.sign) {
-		// 				out.push(log.sign);
-		// 			} else {
-		// 				out.push(options.multiline ? '⤷' : '→ ');
-		// 			}
-		// 		}
-
-		// 		if (log.type === 'response-file') {
-		// 			log.type = 'response';
-		// 			out.push('file:' + color(options.colors[log.type], value));
-		// 		} else {
-		// 			out.push(color(options.colors[log.type], value));
-		// 		}
-
-		// 		if (log.type === 'response') {
-		// 			if (value.length === 0)
-		// 				out.push(chalk.gray.bgWhite('[EMPTY]'));
-
-		// 			if (status !== null) {
-		// 				out.push(colorStatus(status));
-		// 			}
-		// 		}
-
-		// 		if (options.multiline) {
-		// 			out.push('\n');
-		// 		}
-		// 	}
-		// };
-
-		// res.logs.forEach((log, index) => handle(log, index, res.logs.length));
-
-		// options.log(out.join(' '));
 	};
 
 	const isSql = text => {
@@ -321,6 +255,47 @@ const use = (app, options) => {
 		return false;
 	};
 
+	const getDebug = function() {
+		const obj = {};
+		Error.captureStackTrace(obj, getDebug);
+
+		const parts = obj.stack.split('\n');
+
+		for (let i = 1; i < parts.length; i++) {
+			const partParts = parts[i].trim().split(' ');
+
+			if (!partParts[1].startsWith('ServerResponse')) {
+				let file = null,
+					func = null,
+					line = null;
+
+				if (partParts.length === 2) {
+					[, file] = partParts;
+				} else {
+					[, func, file] = partParts;
+				}
+
+				[file, line] = file.split(':');
+
+				if (func && func[0] === '_') func = null;
+
+				return { file: path.basename(file), func, line };
+			}
+		}
+
+		return null;
+	};
+
+	const formatDebug = debug => {
+		return {
+			type: 'debug',
+			value: debug.func
+				? `${debug.file} ${debug.func}:${debug.line}`
+				: `${debug.file}:${debug.line}`,
+			sign: '@'
+		};
+	};
+
 	const log = (res, ...args) => {
 		let parts = [];
 
@@ -334,16 +309,25 @@ const use = (app, options) => {
 			arg = arg.trim();
 
 			if (isSql(arg)) {
-				arg = arg
-					.split(/\n/g)
-					.map(n => n.trim())
-					.join('\n' + options.indent + '  ');
+				arg = arg.split(/\n/g).map(n => n.trim());
+
+				if (options.multiline) {
+					arg = arg.join('\n' + options.indent + '  ');
+				} else {
+					arg = arg.join(' ');
+				}
 
 				type = 'sql';
 			}
 
 			parts.push({ type, value: arg });
 		});
+
+		if (!res.hasDebugData) {
+			res.logs.push(formatDebug(getDebug()));
+			res.hasDebugData = true;
+			res.startTime = new Date().getTime();
+		}
 
 		res.logs.push({ type: 'log', value: parts });
 	};
@@ -353,13 +337,14 @@ const use = (app, options) => {
 			body = json(body);
 		}
 
-		clearTimeout(res.timeout);
+		if (!res.hasDebugData) {
+			res.logs.splice(1, 0, formatDebug(getDebug()));
+			res.hasDebugData = true;
+		}
 
 		res.logs.push({ type: 'response', value: body });
 
-		outputLog(res);
-
-		res.isLogged = true;
+		res.hasData = true;
 
 		res.oSend(body);
 	};
@@ -369,7 +354,7 @@ const use = (app, options) => {
 
 		res.logs.push({ type: 'response-file', value: file });
 
-		outputLog(res);
+		res.hasData = true;
 
 		res.oSendFile(file, options, fn);
 	};
@@ -377,10 +362,45 @@ const use = (app, options) => {
 	const end = (res, ...args) => {
 		clearTimeout(res.timeout);
 
-		if (!res.isLogged) {
+		if (!res.hasData) {
 			res.logs.push({ type: 'response', value: '' });
-			outputLog(res);
 		}
+
+		let status = {
+			type: 'status',
+			value: `[${res.statusCode}]`
+		};
+
+		if (res.statusCode >= 400 && res.statusCode < 500) {
+			status = {
+				type: 'status-client',
+				value: `[${res.statusCode}]`
+			};
+		} else if (res.statusCode >= 500 && res.statusCode < 600) {
+			status = {
+				type: 'status-server',
+				value: `[${res.statusCode}]`
+			};
+		}
+
+		const parts = [];
+
+		parts.push(status);
+
+		if (res.startTime) {
+			parts.push({
+				type: 'time',
+				value: `${new Date().getTime() - res.startTime}ms`
+			});
+		}
+
+		res.logs.push({
+			type: 'info',
+			sign: '=',
+			value: parts
+		});
+
+		outputLog(res);
 
 		res.oEnd(...args);
 	};
@@ -391,7 +411,7 @@ const use = (app, options) => {
 			value: `[NO RESPONSE AFTER ${options.timeout}ms]`
 		});
 
-		outputLog(res, null);
+		outputLog(res);
 	};
 
 	const middleware = async (req, res, next) => {

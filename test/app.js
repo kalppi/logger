@@ -14,7 +14,9 @@ export default options => {
 		res.send('Hello World');
 	});
 
-	app.get('/user/:id', (req, res) => {
+	app.get('/user/:id', async (req, res) => {
+		res.log('Fetching user from database');
+
 		const id = parseInt(req.params.id, 10);
 
 		const sql = `
@@ -23,11 +25,13 @@ export default options => {
 			WHERE u.id = $1
 		`;
 
-		res.log('Fetching user from database', sql, [id]);
+		res.log(sql, [id]);
 
 		res.log('ok');
 
-		res.json({ id, name: 'Pertti', score: 3434 });
+		setTimeout(() => {
+			res.status(200).json({ id, name: 'Pertti', score: 3434 });
+		}, 5);
 	});
 
 	app.get('/sum', (req, res) => {

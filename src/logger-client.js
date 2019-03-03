@@ -10,8 +10,27 @@ const getColor = type => {
 			return 'green';
 		case 'sql':
 			return 'darkorange';
+		case 'status-client':
+			return 'red';
+		case 'status-server':
+			return 'white';
+		case 'meta':
+			return 'red';
 		default:
 			return 'black';
+	}
+};
+
+const getBackground = type => {
+	switch (type) {
+		case 'status-client':
+			return 'yellow';
+		case 'status-server':
+			return 'red';
+		case 'meta':
+			return 'yellow';
+		default:
+			return 'transparent';
 	}
 };
 
@@ -25,7 +44,11 @@ socket.addEventListener('message', function(e) {
 	for (let token of data.tokens) {
 		out.push('%c');
 		out.push(token.value);
-		styles.push(`color:${getColor(token.type)}`);
+		styles.push(
+			`color:${getColor(token.type)};background:${getBackground(
+				token.type
+			)}`
+		);
 	}
 
 	console.log.apply(null, [out.join(''), ...styles]);
